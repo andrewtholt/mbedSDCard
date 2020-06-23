@@ -8,10 +8,11 @@
 // SDBlockDevice blockDevice(PC_3, PC_2, PC_7, PB_9);
 // 
 
-SDBlockDevice blockDevice(PA_7, PA_6, PA_5, PA_8);
+SDBlockDevice *blockDevice;
 
 #include "LittleFileSystem.h"
-LittleFileSystem fileSystem("fs");
+// LittleFileSystem fileSystem("fs");
+LittleFileSystem *fileSystem;
 /*
 #include "FATFileSystem.h"
 FATFileSystem   fileSystem("fs");
@@ -29,6 +30,8 @@ int main() {
     pc = new Serial(USBTX, USBRX);
     pc->baud(115200);
 
+    blockDevice = new SDBlockDevice (PA_7, PA_6, PA_5, PA_8);
+    fileSystem = new LittleFileSystem("fs");
 
     // File system declaration
     printf("--- Mbed OS filesystem example ---\r\n");
@@ -37,14 +40,14 @@ int main() {
     printf("Mounting the filesystem... ");
     fflush(stdout);
 
-    int err = fileSystem.mount(&blockDevice);
+    int err = fileSystem->mount(blockDevice);
     printf("%s\r\n", (err ? "Fail :(" : "OK"));
     if (err) {
         // Reformat if we can't mount the filesystem
         // this should only happen on the first boot
         printf("No filesystem found, formatting... ");
         fflush(stdout);
-        err = fileSystem.reformat(&blockDevice);
+        err = fileSystem->reformat(blockDevice);
         printf("%s\r\n", (err ? "Fail :(" : "OK"));
         if (err) {
             error("error: %s (%d)\r\n", strerror(-err), err);
@@ -177,7 +180,7 @@ int main() {
     // Tidy up
     printf("Unmounting... ");
     fflush(stdout);
-    err = fileSystem.unmount();
+    err = fileSystem->unmount();
     printf("%s\r\n", (err < 0 ? "Fail :(" : "OK"));
     if (err < 0) {
         error("error: %s (%d)\r\n", strerror(-err), err);
