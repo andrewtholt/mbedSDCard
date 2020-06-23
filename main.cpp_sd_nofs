@@ -1,0 +1,56 @@
+#include "mbed.h"
+#include <stdio.h>
+#include <errno.h>
+
+#include "SDBlockDevice.h"
+#include "FATFileSystem.h"
+
+// SDBlockDevice blockDevice(MBED_CONF_SD_SPI_MOSI, MBED_CONF_SD_SPI_MISO, MBED_CONF_SD_SPI_CLK, MBED_CONF_SD_SPI_CS);
+// SDBlockDevice blockDevice(PC_3, PC_2, PC_7, PB_9);
+SDBlockDevice sd(PA_7, PA_6, PA_5, PA_8);
+
+FATFileSystem   fileSystem("fs");
+
+int main() {
+
+    FATFileSystem   fileSystem("fs");
+
+    uint8_t block[512] = "Hello World!\r\n";
+
+    BlockDevice *bd = BlockDevice::get_default_instance();
+
+    Serial *pc;
+    pc = new Serial(USBTX, USBRX);
+    pc->baud(115200);
+
+    if(0 != sd.init() ) {
+        pc->printf("Init Failed\r\n");
+        return -1;
+    }
+
+    pc->printf("Start\r\n");
+
+    printf("sd size: %llu\r\n",         sd.size());
+    printf("sd read size: %llu\r\n",    sd.get_read_size());
+    printf("sd program size: %llu\r\n", sd.get_program_size());
+    printf("sd erase size: %llu\r\n",   sd.get_erase_size());
+
+    // Set the frequency
+    if (0 != sd.frequency(5000000)) {
+        pc->printf("Error setting frequency \r\n");
+    }
+
+    if (0 != sd.erase(0, sd.get_erase_size())) {
+        printf("Error Erasing block \n");
+    }
+
+    if (0 == sd.program(block, 0, 512)) {
+        // Read the data block from the device
+        if (0 == sd.read(block, 0, 512)) {
+            // Print the contents of the block
+            printf("%s", block);
+        }
+    }
+    sd.deinit();
+}
+
